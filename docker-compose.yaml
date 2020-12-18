@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
+    environment:
+      - cluster.name=test
+      - discovery.type=single-node
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.7.1
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  nginx:
+    build:
+      context: build/nginx/
+    environment:
+    # to set hostname use port too
+      KIBANA_HOST: kibana:5601
+    volumes:
+      - /var/log/nginx:/var/log/nginx
+    ports:
+      - 80:80
+    command: /bin/bash -c "envsubst < /etc/nginx/conf.d/kibana.conf > /etc/nginx/conf.d/kibana.conf && nginx -g 'daemon off;'" 
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.7.1
+    volumes:
+      - /var/log/nginx:/var/log/nginx
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
