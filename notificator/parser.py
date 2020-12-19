@@ -8,36 +8,65 @@ class NginxParser():
         self.filename = filename
         self.data = ""
 
-    def _read_data(self):
-        with open(self.filename, "r") as file:
+    def _read_data(self, filename="/var/log/nginx/access.log"):
+        with open(filename, "r") as file:
             self.data = file.read()
 
-    def _get_timestamp(self,string):
-        regex = re.search(r'(\d{2}\/\w{3}\/\d{4}:\d{2}:\d{2}:\d{2})', string)
-        print(regex.group(0))
-        return regex.group(0)
+    def get_timestamp(self, string):
+        if string != "":
+            regex = re.search(r'(\d{2}\/\w{3}\/\d{4}:\d{2}:\d{2}:\d{2})', string)
+            return regex.group(0)
+        return ""
 
-    def _get_ip(self, string):
-        regex = re.search(r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', string)
-        return regex.group(0)
+    def get_ip(self, string):
+        if string != "":
+            regex = re.search(r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', string)
+            return regex.group(0)
+        return ""
 
-    def _get_http_request(self,string):
-        regex = re.search(r'\]\s+"(GET|POST|HEAD|PUT|DELETE|PATCH|OPTIONS)', string)
-        return regex.group(1)
+    def get_http_request(self, string):
+        if string != "":
+            regex = re.search(r'\]\s+"(GET|POST|HEAD|PUT|DELETE|PATCH|OPTIONS)', string)
+            return regex.group(1)
+        return ""
+
+    def get_path(self, string):
+        if string != "":
+            regex = re.search(r'(GET|POST|HEAD|PUT|DELETE|PATCH|OPTIONS)\s+(\/.*) HTTP\/1\.1', string)
+            return regex.group(2)
+        return ""
 
     def _parse_log(self):
-        tmpList = []
-        tmpDict = {}
+        tmplist = list()
         self.parsedLog["logs"] = []
         for item in self.data.split("\n"):
-            tmpDict["timestamp"] = self._get_timestamp(item)
-            tmpDict["ip_address"] = self._get_ip(item)
-            tmpDict["request"] = self._get_http_request(item)
-            tmpList.append(tmpDict)
-            tmpDict = {}
-        self.parsedLog["logs"] = tmpList
+            tmpdict = dict()
+            tmpdict["timestamp"] = self.get_timestamp(item)
+            tmpdict["ip_address"] = self.get_ip(item)
+            tmpdict["request"] = self.get_http_request(item)
+            tmpdict["path"] = self.get_path(item)
+            tmplist.append(tmpdict)
+        self.parsedLog["logs"] = tmplist
         return self.parsedLog
 
-    def getLog(self):
-        self._read_data()
+    def get_parsed_log(self, read=True):
+        if read:
+            self._read_data(self.filename)
         return self._parse_log()
+
+    def raw_log(self, read=False):
+        if read:
+            self._read_data(self.filename)
+        return self.data.split("\n")
+
+    def log_last_line(self, read=False):
+        if read:
+            self._read_data(self.filename)
+        counter = -1
+        listdata = self.data.split("\n")
+        while True:
+            if listdata[counter] != "":
+                return self.data.split("\n")[counter]
+            if -counter == len(listdata):
+                return ""
+            counter = counter - 1
