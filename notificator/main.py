@@ -1,7 +1,7 @@
 from parser import NginxParser
 import time
 
-parserLog = NginxParser("/home/user/workshop/docker_elastic/access.log")
+parserLog = NginxParser("/var/log/nginx/access.log")
 
 
 def main():
