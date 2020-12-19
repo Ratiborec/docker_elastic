@@ -25,3 +25,8 @@ services:
     volumes:
       - /var/log/nginx:/var/log/nginx
       - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+  notification:
+    build:
+      context: notificator/
+    volumes:
+      - /var/log/nginx:/var/log/nginx
